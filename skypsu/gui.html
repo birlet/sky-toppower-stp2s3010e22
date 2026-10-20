@@ -1,0 +1,641 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>STP2S3010E22 Control</title>
+<style>
+:root {
+  --page: #f9f9f7;
+  --surface: #fcfcfb;
+  --ink: #0b0b0b;
+  --ink-2: #52514e;
+  --muted: #898781;
+  --grid: #e1e0d9;
+  --axis: #c3c2b7;
+  --border: rgba(11, 11, 11, 0.10);
+  --actual: #2a78d6;
+  --target: #eb6834;
+  --good: #0ca30c;
+  --warning: #fab219;
+  --critical: #d03b3b;
+  --critical-ink: #ffffff;
+  --btn: #0b0b0b;
+  --btn-ink: #fcfcfb;
+  --field: #ffffff;
+  --shadow: 0 1px 2px rgba(11, 11, 11, 0.04), 0 4px 16px rgba(11, 11, 11, 0.04);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --page: #0d0d0d;
+    --surface: #1a1a19;
+    --ink: #f0efec;
+    --ink-2: #c3c2b7;
+    --muted: #898781;
+    --grid: #2c2c2a;
+    --axis: #383835;
+    --border: rgba(255, 255, 255, 0.10);
+    --actual: #3987e5;
+    --target: #d95926;
+    --btn: #f0efec;
+    --btn-ink: #1a1a19;
+    --field: #121211;
+    --shadow: none;
+  }
+}
+:root[data-theme="dark"] {
+  --page: #0d0d0d;
+  --surface: #1a1a19;
+  --ink: #f0efec;
+  --ink-2: #c3c2b7;
+  --muted: #898781;
+  --grid: #2c2c2a;
+  --axis: #383835;
+  --border: rgba(255, 255, 255, 0.10);
+  --actual: #3987e5;
+  --target: #d95926;
+  --btn: #f0efec;
+  --btn-ink: #1a1a19;
+  --field: #121211;
+  --shadow: none;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background: var(--page);
+  color: var(--ink);
+  font: 14px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+.num { font-variant-numeric: tabular-nums; }
+
+header {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  padding: 14px 24px; border-bottom: 1px solid var(--border); background: var(--surface);
+}
+header h1 { font-size: 15px; font-weight: 600; margin: 0 12px 0 0; letter-spacing: 0.01em; }
+header h1 span { color: var(--muted); font-weight: 400; }
+.chips { display: flex; gap: 8px; flex-wrap: wrap; flex: 1; }
+.chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 3px 10px; border-radius: 999px; border: 1px solid var(--border);
+  color: var(--ink-2); font-size: 12.5px; white-space: nowrap;
+}
+.chip[hidden] { display: none; }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
+.chip.ok .dot { background: var(--good); }
+.chip.bad .dot { background: var(--critical); }
+.chip.alarm { border-color: var(--critical); color: var(--ink); }
+.chip svg { width: 13px; height: 13px; }
+.theme-btn {
+  border: 1px solid var(--border); background: transparent; color: var(--ink-2);
+  border-radius: 8px; padding: 4px 10px; font: inherit; font-size: 12.5px; cursor: pointer;
+}
+
+.banners { padding: 0 24px; }
+.banner {
+  display: flex; align-items: flex-start; gap: 10px; margin-top: 12px;
+  padding: 10px 14px; border-radius: 10px; background: var(--surface);
+  border: 1px solid var(--critical); color: var(--ink);
+}
+.banner svg { flex: none; width: 18px; height: 18px; color: var(--critical); margin-top: 1px; }
+.banner.warn { border-color: var(--warning); }
+.banner.warn svg { color: var(--warning); }
+.banner p { margin: 0; flex: 1; }
+.banner time { color: var(--muted); font-size: 12px; margin-right: 6px; }
+.banner button { border: 0; background: transparent; color: var(--muted); cursor: pointer; font-size: 18px; line-height: 1; padding: 0 2px; }
+
+main {
+  display: grid; grid-template-columns: 320px minmax(0, 1fr); gap: 20px;
+  padding: 20px 24px 12px; max-width: 1400px; margin: 0 auto;
+}
+.card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+  padding: 18px; box-shadow: var(--shadow);
+}
+.side { display: flex; flex-direction: column; gap: 16px; }
+.card h2 { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin: 0 0 12px; }
+
+.readout + .readout { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); }
+.readout .label { color: var(--ink-2); font-size: 13px; }
+.readout .value { font-size: 34px; font-weight: 600; letter-spacing: -0.02em; line-height: 1.15; }
+.readout .value small { font-size: 16px; font-weight: 500; color: var(--ink-2); margin-left: 4px; }
+.readout .set { color: var(--muted); font-size: 12.5px; }
+.readout.compact .value { font-size: 22px; }
+
+.out-btn {
+  width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px;
+  padding: 16px; border-radius: 12px; font: inherit; font-size: 16px; font-weight: 600; cursor: pointer;
+  border: 1px solid var(--border); background: var(--field); color: var(--ink);
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.out-btn:hover:not(:disabled) { border-color: var(--ink-2); }
+.out-btn svg { width: 20px; height: 20px; }
+.out-btn.on { background: var(--critical); border-color: var(--critical); color: var(--critical-ink); }
+.out-btn:disabled { opacity: 0.5; cursor: default; }
+.hint { color: var(--muted); font-size: 12.5px; margin: 10px 0 0; }
+.hint kbd {
+  font: inherit; font-size: 11.5px; padding: 1px 6px; border-radius: 5px;
+  border: 1px solid var(--border); background: var(--field); color: var(--ink-2);
+}
+
+form .row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; }
+form label { display: block; color: var(--ink-2); font-size: 12.5px; }
+.field { position: relative; margin-top: 4px; }
+.field input {
+  width: 100%; min-width: 0; padding: 9px 30px 9px 10px; border-radius: 9px; border: 1px solid var(--border);
+  background: var(--field); color: var(--ink); font: inherit; font-size: 15px; font-variant-numeric: tabular-nums;
+}
+.field input:focus { outline: 2px solid var(--actual); outline-offset: -1px; }
+.field span { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: var(--muted); }
+.apply {
+  margin-top: 12px; width: 100%; padding: 10px; border-radius: 9px; border: 0; cursor: pointer;
+  background: var(--btn); color: var(--btn-ink); font: inherit; font-weight: 600;
+}
+.apply:disabled { opacity: 0.4; cursor: default; }
+
+.charts { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.toolbar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.seg { display: inline-flex; border: 1px solid var(--border); border-radius: 9px; overflow: hidden; background: var(--surface); }
+.seg button {
+  border: 0; background: transparent; color: var(--ink-2); font: inherit; font-size: 13px;
+  padding: 6px 12px; cursor: pointer;
+}
+.seg button + button { border-left: 1px solid var(--border); }
+.seg button[aria-pressed="true"] { background: var(--btn); color: var(--btn-ink); }
+.toolbar .live { color: var(--muted); font-size: 12.5px; }
+
+.chart-card { padding: 14px 16px 10px; }
+.chart-head { display: flex; align-items: baseline; gap: 16px; margin-bottom: 6px; }
+.chart-head h3 { margin: 0; font-size: 14px; font-weight: 600; }
+.legend { display: flex; gap: 14px; color: var(--ink-2); font-size: 12.5px; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend svg { width: 18px; height: 4px; }
+canvas { display: block; width: 100%; height: 230px; touch-action: none; }
+
+.tooltip {
+  position: fixed; pointer-events: none; z-index: 10; min-width: 190px;
+  background: var(--surface); color: var(--ink); border: 1px solid var(--border); border-radius: 10px;
+  padding: 8px 10px; box-shadow: 0 6px 24px rgba(0, 0, 0, 0.12); font-size: 12.5px; display: none;
+}
+.tooltip .t { color: var(--muted); margin-bottom: 4px; }
+.tooltip .r { display: grid; grid-template-columns: 16px 1fr auto; align-items: center; gap: 6px; }
+.tooltip .r b { font-weight: 600; text-align: right; }
+.tooltip .r span { color: var(--ink-2); }
+.tooltip .sep { height: 1px; background: var(--border); margin: 5px 0; }
+
+footer { color: var(--muted); font-size: 12px; text-align: center; padding: 8px 24px 20px; }
+
+.toasts { position: fixed; right: 20px; bottom: 20px; display: flex; flex-direction: column; gap: 8px; z-index: 20; }
+.toast {
+  background: var(--btn); color: var(--btn-ink); padding: 9px 14px; border-radius: 10px; font-size: 13px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.18); animation: fade 3.5s forwards;
+}
+@keyframes fade { 0%, 85% { opacity: 1; } 100% { opacity: 0; } }
+
+.offline main { opacity: 0.55; }
+
+@media (max-width: 860px) {
+  header { padding: 12px 16px; }
+  main { grid-template-columns: minmax(0, 1fr); padding: 16px; }
+  .banners { padding: 0 16px; }
+  canvas { height: 190px; }
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>STP2S3010E22 <span>power supply</span></h1>
+  <div class="chips">
+    <span class="chip" id="chipConn"><span class="dot"></span><span id="connText">connecting …</span></span>
+    <span class="chip" id="chipMode" hidden></span>
+    <span class="chip" id="chipTemp" hidden></span>
+    <span class="chip" id="chipOcp" hidden></span>
+    <span class="chip" id="chipLock" hidden></span>
+    <span class="chip" id="chipBoot" hidden></span>
+  </div>
+  <button class="theme-btn" id="themeBtn" type="button" title="Toggle light/dark">Theme</button>
+</header>
+
+<div class="banners" id="banners" aria-live="assertive"></div>
+
+<main>
+  <section class="side">
+    <div class="card">
+      <h2>Readings</h2>
+      <div class="readout">
+        <div class="label">Voltage</div>
+        <div class="value num"><span id="vVal">–</span><small>V</small></div>
+        <div class="set num">Set <span id="vsVal">–</span> V</div>
+      </div>
+      <div class="readout">
+        <div class="label">Current</div>
+        <div class="value num"><span id="iVal">–</span><small>A</small></div>
+        <div class="set num">Limit <span id="isVal">–</span> A</div>
+      </div>
+      <div class="readout compact">
+        <div class="label">Power</div>
+        <div class="value num"><span id="pVal">–</span><small>W</small></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Output</h2>
+      <button class="out-btn" id="outBtn" type="button" disabled>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v9"/><path d="M6.3 7.1a8 8 0 1 0 11.4 0"/></svg>
+        <span id="outText">–</span>
+      </button>
+      <p class="hint" id="outHint"><kbd>Esc</kbd> switches the output off at any time.</p>
+    </div>
+
+    <div class="card">
+      <h2>Setpoints</h2>
+      <form id="setForm" autocomplete="off">
+        <div class="row">
+          <label>Voltage
+            <div class="field"><input id="vIn" type="number" inputmode="decimal" min="0" max="32" step="0.01" required><span>V</span></div>
+          </label>
+          <label>Current
+            <div class="field"><input id="iIn" type="number" inputmode="decimal" min="0" max="10" step="0.001" required><span>A</span></div>
+          </label>
+        </div>
+        <button class="apply" id="applyBtn" type="submit" disabled>Apply</button>
+        <p class="hint">0–32 V, 0–10 A. Does not switch the output. With OCP enabled the device switches off as soon as the current reaches the limit.</p>
+      </form>
+    </div>
+  </section>
+
+  <section class="charts">
+    <div class="toolbar">
+      <div class="seg" role="group" aria-label="Time range">
+        <button type="button" data-win="30">30 s</button>
+        <button type="button" data-win="120" aria-pressed="true">2 min</button>
+        <button type="button" data-win="600">10 min</button>
+      </div>
+      <span class="live" id="liveText"></span>
+    </div>
+
+    <div class="card chart-card">
+      <div class="chart-head">
+        <h3>Current</h3>
+        <div class="legend">
+          <span><svg viewBox="0 0 18 4"><line x1="0" y1="2" x2="18" y2="2" stroke="var(--actual)" stroke-width="2.5"/></svg>Measured</span>
+          <span><svg viewBox="0 0 18 4"><line x1="0" y1="2" x2="18" y2="2" stroke="var(--target)" stroke-width="2.5" stroke-dasharray="5 3"/></svg>Limit</span>
+        </div>
+      </div>
+      <canvas id="cI" aria-label="Current history, measured and limit"></canvas>
+    </div>
+
+    <div class="card chart-card">
+      <div class="chart-head">
+        <h3>Voltage</h3>
+        <div class="legend">
+          <span><svg viewBox="0 0 18 4"><line x1="0" y1="2" x2="18" y2="2" stroke="var(--actual)" stroke-width="2.5"/></svg>Measured</span>
+          <span><svg viewBox="0 0 18 4"><line x1="0" y1="2" x2="18" y2="2" stroke="var(--target)" stroke-width="2.5" stroke-dasharray="5 3"/></svg>Set</span>
+        </div>
+      </div>
+      <canvas id="cV" aria-label="Voltage history, measured and set"></canvas>
+    </div>
+  </section>
+</main>
+
+<footer>Software is no substitute for a physical emergency stop. When in doubt, press the output key on the device.</footer>
+
+<div class="tooltip" id="tip"></div>
+<div class="toasts" id="toasts"></div>
+
+<script>
+"use strict";
+const $ = (id) => document.getElementById(id);
+const MAX_KEEP_S = 600;
+let samples = [];          // {seq,t,v,i,p,vs,is,out}
+let lastSeq = 0, lastEv = 0, firstPoll = true;
+let state = null, interval = 0.25;
+let winS = 120;
+let hoverT = null;         // time under the mouse pointer
+let busy = false;
+let formDirty = false;
+
+// ---------------------------------------------------------------- Theme
+const themeKey = "psu-theme";
+try { const t = localStorage.getItem(themeKey); if (t) document.documentElement.dataset.theme = t; } catch (e) {}
+$("themeBtn").addEventListener("click", () => {
+  const dark = getComputedStyle(document.documentElement).getPropertyValue("--surface").trim() === "#1a1a19";
+  const next = dark ? "light" : "dark";
+  document.documentElement.dataset.theme = next;
+  try { localStorage.setItem(themeKey, next); } catch (e) {}
+  draw();
+});
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", draw);
+const css = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+
+// ---------------------------------------------------------------- Icons
+const ICON_ALERT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>';
+const ICON_LOCK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>';
+const ICON_SHIELD = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>';
+
+function setChip(el, cls, iconSvg, text) {
+  el.hidden = false;
+  el.className = "chip " + (cls || "");
+  el.replaceChildren();
+  if (iconSvg) { const s = document.createElement("span"); s.innerHTML = iconSvg; s.style.display = "inline-flex"; el.append(s); }
+  el.append(document.createTextNode(text));
+}
+
+// ---------------------------------------------------------------- Messages
+function toast(text) {
+  const d = document.createElement("div");
+  d.className = "toast"; d.textContent = text;
+  $("toasts").append(d);
+  setTimeout(() => d.remove(), 3600);
+}
+function banner(level, text, t) {
+  const b = document.createElement("div");
+  b.className = "banner" + (level === "warn" ? " warn" : "");
+  b.innerHTML = ICON_ALERT;
+  const p = document.createElement("p");
+  const tm = document.createElement("time");
+  tm.textContent = new Date(t * 1000).toLocaleTimeString("en-GB");
+  p.append(tm, document.createTextNode(text));
+  const x = document.createElement("button");
+  x.type = "button"; x.textContent = "×"; x.title = "Close";
+  x.addEventListener("click", () => b.remove());
+  b.append(p, x);
+  $("banners").prepend(b);
+  while ($("banners").children.length > 4) $("banners").lastChild.remove();
+}
+function handleEvent(e) {
+  if (e.level === "error") banner("error", e.text, e.t);
+  else if (e.level === "warn") toast(e.text);
+  else toast(e.text);
+}
+
+// ---------------------------------------------------------------- Polling
+async function poll() {
+  try {
+    const r = await fetch(`/api/state?after=${lastSeq}&ev=${lastEv}`, { cache: "no-store" });
+    const d = await r.json();
+    state = d; interval = d.interval || interval;
+    if (d.samples.length) {
+      samples.push(...d.samples);
+      lastSeq = d.samples[d.samples.length - 1].seq;
+      const cut = samples[samples.length - 1].t - MAX_KEEP_S;
+      let k = 0; while (k < samples.length && samples[k].t < cut) k++;
+      if (k) samples = samples.slice(k);
+    }
+    for (const e of d.events) { if (!firstPoll) handleEvent(e); lastEv = Math.max(lastEv, e.id); }
+    firstPoll = false;
+    render();
+  } catch (err) {
+    state = { connected: false, error: "GUI server not reachable" };
+    render();
+  }
+  setTimeout(poll, Math.max(150, interval * 1000));
+}
+
+// ---------------------------------------------------------------- Rendering
+const fmt = (x, d) => (x == null ? "–" : x.toFixed(d));
+function render() {
+  const conn = state && state.connected;
+  document.body.classList.toggle("offline", !conn);
+  const cc = $("chipConn");
+  cc.className = "chip " + (conn ? "ok" : "bad");
+  $("connText").textContent = conn
+    ? `${state.link.port} · ${state.link.baud} baud · slave ${state.link.slave}`
+    : (state && state.error ? `Not connected – ${state.error}` : "connecting …");
+
+  const st = conn ? state.status : null;
+  if (st) {
+    $("vVal").textContent = fmt(st.voltage, 2);
+    $("iVal").textContent = fmt(st.current, 3);
+    $("pVal").textContent = fmt(st.power, 2);
+    $("vsVal").textContent = fmt(st.set_voltage, 2);
+    $("isVal").textContent = fmt(st.set_current, 3);
+    if (st.output) setChip($("chipMode"), "", null, st.mode === "CC" ? "CC – current limited" : "CV – voltage regulated");
+    else $("chipMode").hidden = true;
+    setChip($("chipTemp"), "", null, `${st.temperature} °C`);
+    if (st.ocp_tripped) setChip($("chipOcp"), "alarm", ICON_ALERT, "OCP tripped");
+    else setChip($("chipOcp"), "", ICON_SHIELD, st.protection.ocp_enabled ? "OCP on" : "OCP off");
+    if (st.key_lock) setChip($("chipLock"), "", ICON_LOCK, "Panel locked"); else $("chipLock").hidden = true;
+    if (st.power_on_output) setChip($("chipBoot"), "alarm", ICON_ALERT, "Output turns on at power-up");
+    else $("chipBoot").hidden = true;
+    if (!formDirty && document.activeElement !== $("vIn") && document.activeElement !== $("iIn")) {
+      $("vIn").value = st.set_voltage.toFixed(2);
+      $("iIn").value = st.set_current.toFixed(3);
+    }
+  }
+  const on = !!(st && st.output);
+  const btn = $("outBtn");
+  btn.classList.toggle("on", on);
+  btn.disabled = !st || busy;
+  $("outText").textContent = !st ? "–" : on ? "ON – voltage on the terminals" : "OFF – switch on";
+  btn.title = on ? "Switch the output off" : `Puts ${fmt(st && st.set_voltage, 2)} V (max. ${fmt(st && st.set_current, 3)} A) on the terminals`;
+  $("applyBtn").disabled = !st || busy;
+  const last = samples[samples.length - 1];
+  $("liveText").textContent = last ? `Updated ${new Date(last.t * 1000).toLocaleTimeString("en-GB")}` : "";
+  draw();
+}
+
+// ---------------------------------------------------------------- Actions
+async function post(path, body) {
+  busy = true; render();
+  try {
+    const r = await fetch(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    const d = await r.json();
+    if (!d.ok) banner("error", d.error || "Error", Date.now() / 1000);
+    return d.ok;
+  } catch (e) {
+    banner("error", "GUI server not reachable", Date.now() / 1000);
+    return false;
+  } finally {
+    busy = false; render();
+  }
+}
+$("outBtn").addEventListener("click", () => {
+  const on = !!(state && state.status && state.status.output);
+  post("/api/output", { on: !on });
+});
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && state && state.status && state.status.output) post("/api/output", { on: false });
+});
+["vIn", "iIn"].forEach((id) => $(id).addEventListener("input", () => { formDirty = true; }));
+$("setForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const volt = parseFloat($("vIn").value), curr = parseFloat($("iIn").value);
+  if (!(volt >= 0 && volt <= 32)) return banner("error", "Voltage must be between 0 and 32 V", Date.now() / 1000);
+  if (!(curr >= 0 && curr <= 10)) return banner("error", "Current must be between 0 and 10 A", Date.now() / 1000);
+  if (await post("/api/set", { volt, curr })) formDirty = false;
+});
+document.querySelectorAll(".seg button").forEach((b) => b.addEventListener("click", () => {
+  winS = +b.dataset.win;
+  document.querySelectorAll(".seg button").forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
+  draw();
+}));
+
+// ---------------------------------------------------------------- Charts
+const charts = [
+  { el: $("cI"), act: "i", tgt: "is", unit: "A", dec: 3, minTop: 0.01, label: "Current" },
+  { el: $("cV"), act: "v", tgt: "vs", unit: "V", dec: 2, minTop: 0.1, label: "Voltage" },
+];
+const PAD = { l: 46, r: 92, t: 8, b: 24 };
+
+function niceStep(range, n) {
+  const raw = range / n, p = Math.pow(10, Math.floor(Math.log10(raw))), f = raw / p;
+  return (f < 1.5 ? 1 : f < 3 ? 2 : f < 7 ? 5 : 10) * p;
+}
+function visible() {
+  if (!samples.length) return { pts: [], t0: 0, t1: winS };
+  const t1 = samples[samples.length - 1].t, t0 = t1 - winS;
+  let k = samples.length - 1;
+  while (k > 0 && samples[k - 1].t >= t0) k--;
+  return { pts: samples.slice(Math.max(0, k - 1)), t0, t1 };
+}
+function draw() {
+  const { pts, t0, t1 } = visible();
+  const col = { act: css("--actual"), tgt: css("--target"), grid: css("--grid"), axis: css("--axis"),
+                muted: css("--muted"), ink2: css("--ink-2"), surface: css("--surface") };
+  for (const c of charts) drawChart(c, pts, t0, t1, col);
+}
+function drawChart(c, pts, t0, t1, col) {
+  const cv = c.el, dpr = window.devicePixelRatio || 1;
+  const W = cv.clientWidth, H = cv.clientHeight;
+  if (cv.width !== Math.round(W * dpr) || cv.height !== Math.round(H * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); }
+  const g = cv.getContext("2d");
+  g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  g.clearRect(0, 0, W, H);
+  const pw = W - PAD.l - PAD.r, ph = H - PAD.t - PAD.b;
+  let top = c.minTop;
+  for (const s of pts) top = Math.max(top, s[c.act], s[c.tgt]);
+  top *= 1.15;
+  const bottom = -0.04 * top;
+  const step = niceStep(top, 4);
+  const x = (t) => PAD.l + ((t - t0) / (t1 - t0)) * pw;
+  const y = (v) => PAD.t + (1 - (v - bottom) / (top - bottom)) * ph;
+  c.geom = { x, y, t0, t1, pw, ph };
+
+  // grid + y axis
+  g.font = "11px system-ui, sans-serif"; g.textBaseline = "middle"; g.textAlign = "right";
+  g.lineWidth = 1;
+  for (let v = 0; v <= top + 1e-9; v += step) {
+    const yy = Math.round(y(v)) + 0.5;
+    g.strokeStyle = v === 0 ? col.axis : col.grid;
+    g.beginPath(); g.moveTo(PAD.l, yy); g.lineTo(PAD.l + pw, yy); g.stroke();
+    g.fillStyle = col.muted;
+    g.fillText(v.toFixed(step < 0.01 ? 3 : step < 0.1 ? 2 : step < 1 ? 1 : 0), PAD.l - 8, yy);
+  }
+  // x axis (clock time)
+  g.textAlign = "center"; g.textBaseline = "top";
+  const tStep = [5, 10, 15, 30, 60, 120, 300].find((s) => (t1 - t0) / s <= 6) || 600;
+  for (let t = Math.ceil(t0 / tStep) * tStep; t <= t1; t += tStep) {
+    const xx = x(t);
+    if (xx < PAD.l + 20 || xx > PAD.l + pw - 20) continue;
+    g.fillStyle = col.muted;
+    g.fillText(new Date(t * 1000).toLocaleTimeString("en-GB"), xx, PAD.t + ph + 7);
+  }
+  if (!pts.length) return;
+
+  g.save();
+  g.beginPath(); g.rect(PAD.l, 0, pw, H); g.clip();
+  const gap = Math.max(1.5, interval * 6);  // gap instead of a line while the connection was lost
+  const line = (key, color, dashed, stepped) => {
+    g.strokeStyle = color; g.lineWidth = 2; g.lineJoin = "round"; g.lineCap = "round";
+    g.setLineDash(dashed ? [6, 4] : []);
+    g.beginPath();
+    let prev = null;
+    for (const s of pts) {
+      const xx = x(s.t), yy = y(s[key]);
+      if (!prev || s.t - prev.t > gap) g.moveTo(xx, yy);
+      else if (stepped) { g.lineTo(xx, y(prev[key])); g.lineTo(xx, yy); }
+      else g.lineTo(xx, yy);
+      prev = s;
+    }
+    g.stroke();
+  };
+  line(c.tgt, col.tgt, true, true);
+  line(c.act, col.act, false, false);   // measured on top so it stays visible when measured = set
+  g.restore();
+  g.setLineDash([]);
+
+  // direct labels at the right edge (ink colour, not series colour)
+  const last = pts[pts.length - 1];
+  let yI = y(last[c.act]), yS = y(last[c.tgt]);
+  if (Math.abs(yI - yS) < 15) { const m = (yI + yS) / 2; const up = last[c.act] >= last[c.tgt]; yI = m + (up ? -8 : 8); yS = m + (up ? 8 : -8); }
+  g.textAlign = "left"; g.textBaseline = "middle"; g.font = "12px system-ui, sans-serif"; g.fillStyle = col.ink2;
+  g.fillText(`Measured ${last[c.act].toFixed(c.dec)} ${c.unit}`, PAD.l + pw + 8, yI);
+  g.fillText(`Set ${last[c.tgt].toFixed(c.dec)} ${c.unit}`, PAD.l + pw + 8, yS);
+
+  // crosshair
+  if (hoverT != null && hoverT >= t0 && hoverT <= t1) {
+    const s = nearest(hoverT);
+    if (s) {
+      const xx = Math.round(x(s.t)) + 0.5;
+      g.strokeStyle = col.ink2; g.globalAlpha = 0.5; g.lineWidth = 1;
+      g.beginPath(); g.moveTo(xx, PAD.t); g.lineTo(xx, PAD.t + ph); g.stroke();
+      g.globalAlpha = 1;
+      for (const [key, color] of [[c.tgt, col.tgt], [c.act, col.act]]) {
+        g.beginPath(); g.arc(x(s.t), y(s[key]), 4.5, 0, Math.PI * 2);
+        g.fillStyle = color; g.fill(); g.lineWidth = 2; g.strokeStyle = col.surface; g.stroke();
+      }
+    }
+  }
+}
+function nearest(t) {
+  let lo = 0, hi = samples.length - 1;
+  if (hi < 0) return null;
+  while (lo < hi) { const mid = (lo + hi) >> 1; if (samples[mid].t < t) lo = mid + 1; else hi = mid; }
+  if (lo > 0 && Math.abs(samples[lo - 1].t - t) < Math.abs(samples[lo].t - t)) lo--;
+  return samples[lo];
+}
+function keySvg(color, dashed) {
+  const ns = "http://www.w3.org/2000/svg";
+  const s = document.createElementNS(ns, "svg"); s.setAttribute("viewBox", "0 0 16 4"); s.setAttribute("width", "16"); s.setAttribute("height", "4");
+  const l = document.createElementNS(ns, "line");
+  l.setAttribute("x1", "0"); l.setAttribute("y1", "2"); l.setAttribute("x2", "16"); l.setAttribute("y2", "2");
+  l.setAttribute("stroke", color); l.setAttribute("stroke-width", "2.5"); if (dashed) l.setAttribute("stroke-dasharray", "4 3");
+  s.append(l); return s;
+}
+function showTip(ev, s) {
+  const tip = $("tip");
+  tip.replaceChildren();
+  const t = document.createElement("div"); t.className = "t";
+  t.textContent = new Date(s.t * 1000).toLocaleTimeString("en-GB") + (s.out ? " · output ON" : " · output OFF");
+  tip.append(t);
+  const rows = [
+    [css("--actual"), false, "Current", `${s.i.toFixed(3)} A`], [css("--target"), true, "Current limit", `${s.is.toFixed(3)} A`], null,
+    [css("--actual"), false, "Voltage", `${s.v.toFixed(2)} V`], [css("--target"), true, "Voltage set", `${s.vs.toFixed(2)} V`], null,
+    [null, false, "Power", `${s.p.toFixed(3)} W`],
+  ];
+  for (const r of rows) {
+    if (!r) { const d = document.createElement("div"); d.className = "sep"; tip.append(d); continue; }
+    const row = document.createElement("div"); row.className = "r";
+    const key = r[0] ? keySvg(r[0], r[1]) : document.createElement("i");
+    const lab = document.createElement("span"); lab.textContent = r[2];
+    const val = document.createElement("b"); val.className = "num"; val.textContent = r[3];
+    row.append(key, lab, val); tip.append(row);
+  }
+  tip.style.display = "block";
+  const w = tip.offsetWidth, h = tip.offsetHeight;
+  let lx = ev.clientX + 16, ly = ev.clientY + 16;
+  if (lx + w > innerWidth - 8) lx = ev.clientX - w - 16;
+  if (ly + h > innerHeight - 8) ly = ev.clientY - h - 16;
+  tip.style.left = lx + "px"; tip.style.top = ly + "px";
+}
+for (const c of charts) {
+  c.el.addEventListener("pointermove", (ev) => {
+    if (!c.geom || !samples.length) return;
+    const r = c.el.getBoundingClientRect();
+    const px = ev.clientX - r.left;
+    if (px < PAD.l || px > PAD.l + c.geom.pw) { hoverT = null; $("tip").style.display = "none"; draw(); return; }
+    hoverT = c.geom.t0 + ((px - PAD.l) / c.geom.pw) * (c.geom.t1 - c.geom.t0);
+    const s = nearest(hoverT);
+    if (s) showTip(ev, s);
+    draw();
+  });
+  c.el.addEventListener("pointerleave", () => { hoverT = null; $("tip").style.display = "none"; draw(); });
+}
+addEventListener("resize", draw);
+poll();
+</script>
+</body>
+</html>

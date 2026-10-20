@@ -1,0 +1,71 @@
+# Register map of the SKY TOPPOWER STP2S3010E22 (Modbus RTU; FC03 read, FC06 write)
+# Reverse engineered in October 2026 with `python -m skypsu.scan` on two units of the same model.
+# See docs/PROTOCOL.md for how each entry was verified and for device quirks.
+#
+# status:
+#   confirmed  - verified on the device by operating it and watching the register change
+#   likely     - value is plausible but was not confirmed by a change
+#   unknown    - readable, meaning unclear
+# decimals: raw / 10**decimals. Register 0x0005 = 0x0233 -> V 2, A 3, W 3 decimals.
+# words: 2 = 32-bit value, high word first.
+
+link:
+  baud: 9600
+  slave: 1
+  usb_vid_pid: "1A86:7523"   # WCH CH340, no USB serial number
+
+# Device identity: these registers must match exactly, otherwise skypsu refuses every write.
+# (0x0003/0x0004/0x00F0 change with temperature or power cycles and are not usable as identity.)
+identity:
+  0x0005: 0x0233   # decimals V 2, A 3, W 3
+  0x0014: 3200     # rated voltage 32.00 V
+  0x0015: 10200    # rated current 10.200 A
+
+# Limits checked by skypsu before every write
+limits:
+  voltage: 32.0
+  current: 10.0
+
+registers:
+  unknown_0000:  {addr: 0x0000, access: r,  status: unknown,   note: "always 0"}
+  output:        {addr: 0x0001, access: rw, status: confirmed, note: "0 = off, 1 = on. FC06 write verified; OFF shows up in the register after up to ~0.4 s"}
+  status_flags:  {addr: 0x0002, access: r,  status: confirmed, note: "bit mask, see 'flags' below"}
+  temperature:   {addr: 0x0003, access: r,  status: likely,    unit: "°C", note: "rose 23 -> 31 under load"}
+  sensor_0004:   {addr: 0x0004, access: r,  status: unknown,   note: "134..135, changes slightly under load"}
+  decimals:      {addr: 0x0005, access: r,  status: likely,    note: "0x0233 = V 2, A 3, W 3"}
+  unknown_0006:  {addr: 0x0006, access: r,  status: unknown,   note: "usually 4, briefly 0 after a reset"}
+
+  voltage:       {addr: 0x0010, access: r,  status: confirmed, decimals: 2, unit: V,  note: "measured output voltage"}
+  current:       {addr: 0x0011, access: r,  status: confirmed, decimals: 3, unit: A,  note: "measured output current"}
+  power:         {addr: 0x0012, words: 2,   access: r,  status: confirmed, decimals: 3, unit: W, note: "measured output power"}
+
+  max_voltage:   {addr: 0x0014, access: r,  status: likely,    decimals: 2, unit: V,  note: "rated voltage 32.00 V"}
+  max_current:   {addr: 0x0015, access: r,  status: likely,    decimals: 3, unit: A,  note: "rated current 10.200 A"}
+  max_power:     {addr: 0x0016, words: 2,   access: r,  status: likely, decimals: 3, unit: W, note: "rated power 326.400 W"}
+
+  ovp:           {addr: 0x0020, access: rw, status: confirmed, decimals: 2, unit: V,  note: "OVP threshold (menu ouP value). Writing untested"}
+  ocp:           {addr: 0x0021, access: r,  status: confirmed, decimals: 3, unit: A,  note: "always equals the current setpoint"}
+  opp:           {addr: 0x0022, words: 2,   access: r,  status: likely, decimals: 3, unit: W, note: "326.4 W, not adjustable in the menu"}
+
+  set_voltage:   {addr: 0x0030, access: rw, status: confirmed, decimals: 2, unit: V,  note: "voltage setpoint, FC06 write verified"}
+  set_current:   {addr: 0x0031, access: rw, status: confirmed, decimals: 3, unit: A,  note: "current limit, FC06 write verified"}
+
+  key_lock:      {addr: 0x0040, access: rw, status: confirmed, note: "1 = panel locked. Writing untested"}
+  unknown_0041:  {addr: 0x0041, access: r,  status: unknown,   note: "always 1 on both units, probably menu item 'o1' (fixed)"}
+  ovp_enable:    {addr: 0x0042, access: rw, status: confirmed, note: "1 = OVP enabled. Writing untested"}
+  ocp_enable:    {addr: 0x0043, access: rw, status: confirmed, note: "1 = OCP enabled (output trips at the current limit instead of CC). Writing untested"}
+  opp_enable:    {addr: 0x0044, access: rw, status: likely,    note: "1 = OPP enabled. Writing untested"}
+
+  power_cycles:  {addr: 0x00F0, access: r,  status: likely,    note: "increments on every power-up and on menu reset"}
+  unknown_00f1:  {addr: 0x00F1, access: r,  status: unknown,   note: "always 0"}
+  unknown_00f2:  {addr: 0x00F2, access: r,  status: unknown,   note: "became 1 after a menu reset, 0 after the next power cycle"}
+
+  slave_address: {addr: 0x9999, access: rw, status: likely,    note: "Modbus address (menu Addr). Writing untested"}
+
+# Bits of status_flags (0x0002)
+flags:
+  key_lock:        {bit: 0x01, status: confirmed, note: "panel locked (mirrors 0x0040)"}
+  buzzer:          {bit: 0x02, status: likely,    note: "buzzer enabled (menu beep)"}
+  ocp_tripped:     {bit: 0x08, status: confirmed, note: "OCP tripped, output switched off by the device"}
+  cc_mode:         {bit: 0x40, status: confirmed, note: "constant current mode (0 = CV)"}
+  power_on_output: {bit: 0x80, status: confirmed, note: "output switches on automatically at power-up (menu n0 = yes). Also blinks while editing in the menu"}

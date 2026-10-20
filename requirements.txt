@@ -1,0 +1,4 @@
+pyserial>=3.5
+pyyaml>=6.0
+# optional, only for python -m skypsu.plot:
+matplotlib>=3.8
