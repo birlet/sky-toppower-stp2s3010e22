@@ -10,3 +10,4 @@ dist/
 scan_results/
 *.csv
 *.png
+!docs/images/*.png

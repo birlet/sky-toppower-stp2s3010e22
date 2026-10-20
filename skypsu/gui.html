@@ -475,10 +475,10 @@ document.querySelectorAll(".seg button").forEach((b) => b.addEventListener("clic
 
 // ---------------------------------------------------------------- Charts
 const charts = [
-  { el: $("cI"), act: "i", tgt: "is", unit: "A", dec: 3, minTop: 0.01, label: "Current" },
-  { el: $("cV"), act: "v", tgt: "vs", unit: "V", dec: 2, minTop: 0.1, label: "Voltage" },
+  { el: $("cI"), act: "i", tgt: "is", tgtLabel: "Limit", unit: "A", dec: 3, minTop: 0.01, label: "Current" },
+  { el: $("cV"), act: "v", tgt: "vs", tgtLabel: "Set", unit: "V", dec: 2, minTop: 0.1, label: "Voltage" },
 ];
-const PAD = { l: 46, r: 92, t: 8, b: 24 };
+const PAD = { l: 46, r: 128, t: 8, b: 24 };  // r: room for "Measured 0.000 A"
 
 function niceStep(range, n) {
   const raw = range / n, p = Math.pow(10, Math.floor(Math.log10(raw))), f = raw / p;
@@ -563,7 +563,7 @@ function drawChart(c, pts, t0, t1, col) {
   if (Math.abs(yI - yS) < 15) { const m = (yI + yS) / 2; const up = last[c.act] >= last[c.tgt]; yI = m + (up ? -8 : 8); yS = m + (up ? 8 : -8); }
   g.textAlign = "left"; g.textBaseline = "middle"; g.font = "12px system-ui, sans-serif"; g.fillStyle = col.ink2;
   g.fillText(`Measured ${last[c.act].toFixed(c.dec)} ${c.unit}`, PAD.l + pw + 8, yI);
-  g.fillText(`Set ${last[c.tgt].toFixed(c.dec)} ${c.unit}`, PAD.l + pw + 8, yS);
+  g.fillText(`${c.tgtLabel} ${last[c.tgt].toFixed(c.dec)} ${c.unit}`, PAD.l + pw + 8, yS);
 
   // crosshair
   if (hoverT != null && hoverT >= t0 && hoverT <= t1) {

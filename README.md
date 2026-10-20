@@ -9,6 +9,8 @@ power supply. Works on Windows and Linux; the vendor software is Windows only.
 - **Register scanner** to explore and verify the register layout
 - **Live plot** with matplotlib
 
+![Web GUI: readings, output switch, setpoints and live charts of current and voltage](docs/images/gui.png)
+
 > **Safety:** Software is no substitute for a physical emergency stop. Keep the output key or the mains
 > switch within reach whenever voltage is on the terminals. This project is not affiliated with
 > SKY TOPPOWER; use at your own risk.
